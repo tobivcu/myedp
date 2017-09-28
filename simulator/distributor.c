@@ -5,6 +5,8 @@
  */
 #include "distributor.h"
 
+//This line is just to exercise my local sync and remote sync commands and write it in the Wiz
+
 static Distributor dist;
 
 typedef unsigned long ULONG;
