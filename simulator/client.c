@@ -113,7 +113,7 @@ void* encoder(void* ptr)
 	//memset(dtmp,0,sizeof(char)*MAX_SEG_SIZE);
 	gettimeofday(&a, NULL);
 
-	printf("Now prepare to go into while loop in encoder...\n");
+	printf("Now prepare to go into while loop in encoder...\nThis is the test on day Jan 23rd, 2018...\n");
 /*There is only one element in pa.q so there is no loop at all.*/
 /*	pa.q = NewQueue();
 	test = NewQueue();
@@ -131,7 +131,8 @@ void* encoder(void* ptr)
 //	Enqueue(pa.q, test);
 	while ((seg = Dequeue(pa.q)) != NULL) {
 //		fprintf(stderr,"%d-th chunk: %d, last_gid: %d\n",st_cnt,seg->stid,lgid);
-		printf("Now inside while loop in encoder...\n");
+	//	printf("%d-th chunk: %d, last_gid: %d\n",st_cnt,seg->stid,lgid);
+	//	printf("Now inside while loop in encoder...\n");
 		if (seg->stid != lgid) {
 			//First Stripe Starts
 			if (lgid != -1) {
@@ -144,10 +145,10 @@ void* encoder(void* ptr)
 					memset(data[i],0,sizeof(char)*MAX_SEG_SIZE);
 				}
 				pthread_mutex_lock(&encode_lock);
-				printf("In encoder, 1st jerasure matrix encode...\n");
+			//	printf("In encoder, 1st jerasure matrix encode...\n");
 				jerasure_matrix_encode(k,m,w,matrix,data,coding,MAX_SEG_SIZE);
 				pthread_mutex_unlock(&encode_lock);
-				printf("Encoding Complete:\n\n");
+			//	printf("Encoding Complete:\n\n");
 				//print_data_and_coding(st_cnt,m,w,MAX_SEG_SIZE,data,coding);
 				for (i=0;i<m;i++) {
 					stripe[st_cnt] = (Segment*)malloc(sizeof(Segment));
@@ -205,7 +206,8 @@ void* encoder(void* ptr)
 			stlen++;
 		}
 		free(seg);
-	}// end while 
+	}// end while
+	printf("Now the while loop ends...does it go through it?\n"); 
 	if (st_cnt > 0) {
 		printf("Now go to the st_cnt>0 branch...\n");
 		//encoding last stripe of data
@@ -465,7 +467,7 @@ void* writer(void* ptr)
 	timersub(&d,&d,&d);
 	while((seg = Dequeue(pa.q)) != NULL){
 		cnt++;
-		printf("Now get into while loop in writer...\n");
+	//	printf("Now get into while loop in writer...\n");
 
 #ifndef SIMULATION
 		memcpy(mbuf+(cnt-1)%64*(sizeof(uint64_t)+sizeof(uint32_t)),&(seg->id),sizeof(uint64_t));
@@ -500,7 +502,8 @@ void* writer(void* ptr)
 		free(seg->data);
 		free(seg);
 	}
-#ifndef SIMULTAION
+//#ifndef SIMULTAION
+#ifndef SIMULATION
 		if (cnt%64 != 0) {
 			gettimeofday(&a,NULL);
 			cur_len = 0;
@@ -969,10 +972,10 @@ void* response(void* ptr)
 							byte_stat[seg->pdisk[j]]+= MAX_SEG_SIZE;
 						}
 					}
-					//fprintf(stderr,"Chunk%ld in stripe %ld to disk %d\n",seg->id, seg->stid, seg->disk);
-#ifndef SIMULATION
+			//		printf("Chunk%ld in stripe %ld to disk %d\n",seg->id, seg->stid, seg->disk);
+//#ifndef SIMULATION
 					Enqueue((Queue*)(args.oq[turn%ENCODER_NUM]),seg);
-#endif
+//#endif
 				}
 			}
 			n = 0;
@@ -994,9 +997,9 @@ void* response(void* ptr)
 					}
 				}
 				//fprintf(stderr,"Chunk%ld in stripe %ld to disk %d\n",seg->id, seg->stid,seg->disk);
-#ifndef SIMULATION
+//#ifndef SIMULATION
 				Enqueue((Queue*)(args.oq[turn%ENCODER_NUM]),seg);
-#endif
+//#endif
 			}
 		}
 	}
@@ -1101,7 +1104,7 @@ int main(int argc, char** argv)
 		for(j=i;j<end;j++){
 			int rfd = open(files[j],O_RDONLY);
 		//	printf("rfd is %d\n", rfd);
-			printf("August 14th\n");
+			printf("December 11th...\n");
 			uint64_t sz = lseek(rfd,0,SEEK_END);
 			fsize += sz;
 			if (fsize > 9999999999 && printed == 0){
@@ -1136,6 +1139,9 @@ int main(int argc, char** argv)
 			cargs[j].oq = (Queue**)malloc(sizeof(Queue*)*DISK_NUM);
 			for (k=0;k<DISK_NUM;k++) cargs[j].oq[k] = wargs[k].q;
 			cargs[j].q = NewQueue();
+		//	printf("before enqueue\n");
+		//	Enqueue(cargs[j].q, *rdata);
+		//	printf("after enqueue\n");
 			if(cargs[j].q == NULL)
 				{printf("cargs[j].q is NULL\n");}
 			else

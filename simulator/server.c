@@ -86,6 +86,7 @@ void* process(void* ptr){
 			if(n == BUF_SIZE){
 				while(n>0){
 					w = write(connfd,buf+BUF_SIZE-n,n);
+				//	printf("sending ... %d", w);
 					n -= w;		
 				}
 				r = 0;
@@ -95,6 +96,7 @@ void* process(void* ptr){
     	}
 	while(n>0){
 		w = write(connfd,buf+r,n);
+	//	printf("sending ... %d", w);
 		r += w;
 		n -= w;
 	}
