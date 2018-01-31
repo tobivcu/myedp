@@ -113,7 +113,7 @@ void* encoder(void* ptr)
 	//memset(dtmp,0,sizeof(char)*MAX_SEG_SIZE);
 	gettimeofday(&a, NULL);
 
-	printf("Now prepare to go into while loop in encoder...\nThis is the test on day Jan 23rd, 2018...\n");
+//	printf("Now prepare to go into while loop in encoder...\nThis is the test on day Jan 23rd, 2018...\n");
 /*There is only one element in pa.q so there is no loop at all.*/
 /*	pa.q = NewQueue();
 	test = NewQueue();
@@ -123,15 +123,15 @@ void* encoder(void* ptr)
 	else
 		printf("test is not NULL\n");
 */
-	if(pa.q == NULL)
-                printf("pa.q is NULL\n");
-        else
-                printf("pa.q is not NULL, and , the current length of pa.q is %d\n", pa.q->cur_len);	
+//	if(pa.q == NULL)
+//                printf("pa.q is NULL\n");
+//        else
+//                printf("pa.q is not NULL, and , the current length of pa.q is %d\n", pa.q->cur_len);	
 //	char * test = "hello";
 //	Enqueue(pa.q, test);
 	while ((seg = Dequeue(pa.q)) != NULL) {
 //		fprintf(stderr,"%d-th chunk: %d, last_gid: %d\n",st_cnt,seg->stid,lgid);
-	//	printf("%d-th chunk: %d, last_gid: %d\n",st_cnt,seg->stid,lgid);
+		printf("Inside encoder, %d-th chunk: %d, last_gid: %d\n",st_cnt,seg->stid,lgid);
 	//	printf("Now inside while loop in encoder...\n");
 		if (seg->stid != lgid) {
 			//First Stripe Starts
@@ -145,11 +145,11 @@ void* encoder(void* ptr)
 					memset(data[i],0,sizeof(char)*MAX_SEG_SIZE);
 				}
 				pthread_mutex_lock(&encode_lock);
-			//	printf("In encoder, 1st jerasure matrix encode...\n");
+				printf("1st encoder, with data %s and coding %s, stlen %d...\n", data, coding, stlen);
 				jerasure_matrix_encode(k,m,w,matrix,data,coding,MAX_SEG_SIZE);
 				pthread_mutex_unlock(&encode_lock);
-			//	printf("Encoding Complete:\n\n");
-				//print_data_and_coding(st_cnt,m,w,MAX_SEG_SIZE,data,coding);
+				printf("first encoding Complete:\n\n");
+			//	print_data_and_coding(st_cnt,m,w,MAX_SEG_SIZE,data,coding);
 				for (i=0;i<m;i++) {
 					stripe[st_cnt] = (Segment*)malloc(sizeof(Segment));
 					stripe[st_cnt]->id = stripe[0]->pid[i];
@@ -159,7 +159,8 @@ void* encoder(void* ptr)
 					stripe[st_cnt]->disk = stripe[0]->pdisk[i];
 					stripe[st_cnt]->stlen = stlen;
 					//fprintf(stderr,"code chunk %ld to slave %d\n",stripe[st_cnt]->id,stripe[st_cnt]->disk);
-					st_cnt++;
+					printf("code chunk %ld to slave %d\n", stripe[st_cnt]->id, stripe[st_cnt]->disk);		
+			st_cnt++;
 				}
 
 				for (i=stlen;i<k;i++)
@@ -169,6 +170,8 @@ void* encoder(void* ptr)
 				//fprintf(stderr,"STRIPE:");
 				for (i=0;i<st_cnt;i++){
 					//fprintf(stderr,"chunk %ld to slave %d,",stripe[i]->id,stripe[i]->disk);
+						printf("code chunk %ld to slave %d\n", stripe[i]->id, stripe[i]->disk);		
+
 					Enqueue(pa.oq[stripe[i]->disk],stripe[i]);
 				}
 				//fprintf(stderr,"\n");
@@ -207,7 +210,7 @@ void* encoder(void* ptr)
 		}
 		free(seg);
 	}// end while
-	printf("Now the while loop ends...does it go through it?\n"); 
+//	printf("Now the while loop ends...does it go through it?\n"); 
 	if (st_cnt > 0) {
 		printf("Now go to the st_cnt>0 branch...\n");
 		//encoding last stripe of data
@@ -220,8 +223,9 @@ void* encoder(void* ptr)
 			data[i] = (char*)malloc(sizeof(char)*MAX_SEG_SIZE);
 			memset(data[i],0,sizeof(char)*MAX_SEG_SIZE);
 		}
-		printf("In encoder, the 2nd jerasure matrix encode...\n");
+		printf("Second encoder, with data %s and coding %s...\n", data, coding);
 		jerasure_matrix_encode(k,m,w,matrix,data,coding,MAX_SEG_SIZE);
+		printf("Second encoder complete...\n");
 		for (i=0;i<m;i++) {
 			stripe[st_cnt] = (Segment*)malloc(sizeof(Segment));
 			stripe[st_cnt]->id = stripe[0]->pid[i];

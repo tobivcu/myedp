@@ -12,34 +12,34 @@ static Distributor dist;
 typedef unsigned long ULONG;
 
 // add the heapsort function
-void Swap( int *num_a, int *num_b )
+void Swap( Segment** num_a, Segment** num_b )
 {
-    int temp = *num_b;
+    Segment* temp = *num_b;
     *num_b = *num_a;
     *num_a = temp;
 }
 
-void HeapAdjust(int array[], int i, int nLength)
+void HeapAdjust(Segment* array[], int i, int nLength)
 {
     int nChild, nTemp;
-    for (nTemp = array[i]; 2 * i + 1 < nLength; i = nChild)
+    for (nTemp = dist._sen[array[i]->id].ref; 2 * i + 1 < nLength; i = nChild)
     {
         nChild = 2 * i + 1;
-        if (nChild != nLength - 1 && array[nChild + 1] > array[nChild])
+        if (nChild != nLength - 1 && dist._sen[array[nChild+1]->id].ref > dist._sen[array[nChild]->id].ref)
             ++nChild;
-        if (nTemp < array[nChild])
+        if (nTemp < dist._sen[array[nChild]->id].ref)
         {
-            array[i] = array[nChild];
+            Swap(&array[i], &array[nChild]);
         }
         else         {
             break;
         }
     }
-    array[i] = nTemp;
+    dist._sen[array[i]->id].ref = nTemp;
 }
-void HeapSort(int array[], int length)
+void HeapSort(Segment* array[], int length)
 {
-    printf("heapsorting......");
+    printf("heapsorting......\n");
     for (int i = length / 2 - 1; i >= 0; --i)
     {
         HeapAdjust(array, i, length);
@@ -210,13 +210,21 @@ static void RADBased(Segment** sbuf, int num,int did){
 	            }  
 		}
 */
-	int arrayref[num];
-	for(int i = 0; i< num; ++i)
-	{
-		arrayref[i] = dist._sen[sbuf[i]->id].ref;
-	}
+//	int arrayref[num];
+//	for(int i = 0; i< num; ++i)
+//	{
+//		arrayref[i] = dist._sen[sbuf[i]->id].ref;
+//	}
 
-	HeapSort(arrayref, num);
+	HeapSort(sbuf, num);
+	
+//	for(i=0;i<num;i++){
+//	printf("for sbuf[%d], its ref is %d", i, dist._sen[sbuf[i]->id].ref);
+	
+//}
+
+
+
 
 	for (i=0;i<dist._sizeofR[did];i++)
 		dist._CDArray[did][dist._RArray[did][i].ab_file_id*ARRAY_SIZE+placement[dist._RArray[did][i].block_id].node_id]++;
