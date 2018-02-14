@@ -110,7 +110,14 @@ static void Basline(Segment** sbuf, int num,int did){
 	//fprintf(stderr,"Num of chunks in segment %d, num of files %d, size of R %d\n",num,dist._fSize[did],dist._sizeofR[did]);	
 
 	placement = BASLINE(b(ARRAY_SIZE,STRIPE_SIZE)*STRIPE_SIZE*STRIPE_SIZE/ARRAY_SIZE,ARRAY_SIZE,dist._f[did],dist._fSize[did],dist._DArray[did],dist._RArray[did], dist._sizeofR[did],STRIPE_SIZE-CODE_SIZE,CODE_SIZE);
-	for (i=0;i<dist._sizeofR[did];i++)
+	
+for(i=0;i<num;i++){
+	printf("After Heapsorting, for sbuf[%d], its ref is %d\n", i, dist._sen[sbuf[i]->id].ref);
+	
+}
+
+
+for (i=0;i<dist._sizeofR[did];i++)
 		dist._CDArray[did][dist._RArray[did][i].ab_file_id*ARRAY_SIZE+placement[dist._RArray[did][i].block_id].node_id]++;
 
     for (i=0;i<num;i++){
@@ -218,10 +225,10 @@ static void RADBased(Segment** sbuf, int num,int did){
 
 	HeapSort(sbuf, num);
 	
-//	for(i=0;i<num;i++){
-//	printf("for sbuf[%d], its ref is %d", i, dist._sen[sbuf[i]->id].ref);
+	for(i=0;i<num;i++){
+	printf("After Heapsorting, for sbuf[%d], its ref is %d\n", i, dist._sen[sbuf[i]->id].ref);
 	
-//}
+}
 
 
 
@@ -625,7 +632,7 @@ static void* process(void* ptr){
 	//Assume that files are processed in order and separately
 	while((seg=(Segment*) Dequeue(dist._iq[did])) != NULL) {
 		//printf("Distributor: chunk %ld of file %d, unique?%d\n",seg->id,seg->fid,seg->unique);
-	//	printf("the reference counter of the chunk %ld is %d\n", seg->id, dist._sen[seg->id].ref);
+		printf("Right after the while loop, the reference counter of the chunk %ld is %d\n", seg->id, dist._sen[seg->id].ref);
 		//fprintf(stderr,"Distributor: chunk %ld of file %d, unique?%d",seg->id,seg->fid,seg->unique);
 		//Update fSize if segment with different fid is encountered
 	//	while_loop_count++;
@@ -821,7 +828,7 @@ static void* process(void* ptr){
 			//lfid=-1;
 			cfid=-1;
 		}
-
+//	printf("Out of the while loop, the reference counter of the chunk %ld is %d\n", seg->id, dist._sen[seg->id].ref);
 	}
 	if(cnt > 0){
 		//Make decision on distribution of current buffered segments
@@ -837,7 +844,6 @@ static void* process(void* ptr){
 		} else if (dist._method == R ) {
                         RADBased(sbuf,cnt,did);
                 }
-
 
 /*
 

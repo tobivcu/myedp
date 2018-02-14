@@ -145,10 +145,10 @@ void* encoder(void* ptr)
 					memset(data[i],0,sizeof(char)*MAX_SEG_SIZE);
 				}
 				pthread_mutex_lock(&encode_lock);
-				printf("1st encoder, with data %s and coding %s, stlen %d...\n", data, coding, stlen);
+		//		printf("1st encoder, with data %s and coding %s, stlen %d...\n", data, coding, stlen);
 				jerasure_matrix_encode(k,m,w,matrix,data,coding,MAX_SEG_SIZE);
 				pthread_mutex_unlock(&encode_lock);
-				printf("first encoding Complete:\n\n");
+		//		printf("first encoding Complete:\n\n");
 			//	print_data_and_coding(st_cnt,m,w,MAX_SEG_SIZE,data,coding);
 				for (i=0;i<m;i++) {
 					stripe[st_cnt] = (Segment*)malloc(sizeof(Segment));
@@ -159,7 +159,7 @@ void* encoder(void* ptr)
 					stripe[st_cnt]->disk = stripe[0]->pdisk[i];
 					stripe[st_cnt]->stlen = stlen;
 					//fprintf(stderr,"code chunk %ld to slave %d\n",stripe[st_cnt]->id,stripe[st_cnt]->disk);
-					printf("code chunk %ld to slave %d\n", stripe[st_cnt]->id, stripe[st_cnt]->disk);		
+		//			printf("code chunk %ld to slave %d\n", stripe[st_cnt]->id, stripe[st_cnt]->disk);		
 			st_cnt++;
 				}
 
@@ -170,7 +170,7 @@ void* encoder(void* ptr)
 				//fprintf(stderr,"STRIPE:");
 				for (i=0;i<st_cnt;i++){
 					//fprintf(stderr,"chunk %ld to slave %d,",stripe[i]->id,stripe[i]->disk);
-						printf("code chunk %ld to slave %d\n", stripe[i]->id, stripe[i]->disk);		
+				//		printf("code chunk %ld to slave %d\n", stripe[i]->id, stripe[i]->disk);		
 
 					Enqueue(pa.oq[stripe[i]->disk],stripe[i]);
 				}
@@ -184,7 +184,9 @@ void* encoder(void* ptr)
 			stripe[st_cnt] = (Segment*)malloc(sizeof(Segment));
 			memcpy(stripe[st_cnt],seg,sizeof(Segment));
 #ifndef FSL
-			memcpy(data[st_cnt],pa.data[seg->fid]+seg->offset,seg->len);
+			printf("before assign seg->data...\n");
+			memcpy(data[st_cnt],seg->data,seg->len);
+			printf("after assign seg->data...\n");
 #else
 			memcpy(data[st_cnt],dummy,seg->len);
 #endif
@@ -199,7 +201,7 @@ void* encoder(void* ptr)
             stripe[st_cnt] = (Segment*)malloc(sizeof(Segment));
 			memcpy(stripe[st_cnt],seg,sizeof(Segment));
 #ifndef FSL
-			memcpy(data[st_cnt],pa.data[seg->fid]+seg->offset,seg->len);
+			memcpy(data[st_cnt],seg->data,seg->len);
 #else
 			memcpy(data[st_cnt],dummy,seg->len);
 #endif
@@ -212,7 +214,7 @@ void* encoder(void* ptr)
 	}// end while
 //	printf("Now the while loop ends...does it go through it?\n"); 
 	if (st_cnt > 0) {
-		printf("Now go to the st_cnt>0 branch...\n");
+	//	printf("Now go to the st_cnt>0 branch...\n");
 		//encoding last stripe of data
 		for (i=0;i<m;i++)
 			coding[i] = (char*)malloc(sizeof(char)*MAX_SEG_SIZE);
@@ -223,9 +225,9 @@ void* encoder(void* ptr)
 			data[i] = (char*)malloc(sizeof(char)*MAX_SEG_SIZE);
 			memset(data[i],0,sizeof(char)*MAX_SEG_SIZE);
 		}
-		printf("Second encoder, with data %s and coding %s...\n", data, coding);
+	//	printf("Second encoder, with data %s and coding %s...\n", data, coding);
 		jerasure_matrix_encode(k,m,w,matrix,data,coding,MAX_SEG_SIZE);
-		printf("Second encoder complete...\n");
+	//	printf("Second encoder complete...\n");
 		for (i=0;i<m;i++) {
 			stripe[st_cnt] = (Segment*)malloc(sizeof(Segment));
 			stripe[st_cnt]->id = stripe[0]->pid[i];
@@ -1108,7 +1110,7 @@ int main(int argc, char** argv)
 		for(j=i;j<end;j++){
 			int rfd = open(files[j],O_RDONLY);
 		//	printf("rfd is %d\n", rfd);
-			printf("December 11th...\n");
+		//	printf("December 11th...\n");
 			uint64_t sz = lseek(rfd,0,SEEK_END);
 			fsize += sz;
 			if (fsize > 9999999999 && printed == 0){
@@ -1118,7 +1120,7 @@ int main(int argc, char** argv)
 			rdata[j-i] = (uint8_t*)mmap(0,sz,PROT_READ,MAP_SHARED,rfd,0);
 		//	printf("rdata is %s\n", rdata[j-i]);
 			ss[j-i] = sz;
-			printf("File: %s of size %lu\n", files[j],sz);
+		//	printf("File: %s of size %lu\n", files[j],sz);
 			close(rfd);
 		}
 
@@ -1172,8 +1174,9 @@ int main(int argc, char** argv)
 		res.fd = &connfd;
 		res.oq = (Queue**)malloc(sizeof(Queue*)*ENCODER_NUM);
 		for(j=0;j<ENCODER_NUM;j++){
-			res.oq[j] = cargs[j].q;
-		}
+		res.oq[j] = cargs[j].q;
+	//	 cargs[j].q = res.oq[j] ;	
+	}
 
 	pthread_create(&_request,NULL,request,&req);
 	pthread_create(&_response,NULL,response,&res);
