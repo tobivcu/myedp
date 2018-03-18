@@ -6,6 +6,8 @@
 #include "listener.h"
 #include "common.h"
 #include "dedupe.h"
+#include "gc.h"
+#include "gcbs.h"
 #include "image.h"
 #include "distributor.h"
 #include <sys/socket.h>
@@ -115,6 +117,155 @@ void* process(void* ptr){
 	return NULL;
 }
 
+void* process1(void* ptr){
+	THREAD_ARGU ta = *(THREAD_ARGU *)ptr;
+	int connfd = ta.connfd;
+	int srv_id = ta.srv_id;
+	free(ptr);
+	printf("\nConnection fd: %d\n",connfd);
+	printf("Doing garbage collection and re-encode...\n");
+	char buf[BUF_SIZE];
+	int stat[ARRAY_SIZE];
+	memset(stat,0,sizeof(int)*ARRAY_SIZE);
+	
+	Queue* lq = NewQueue();
+    	Queue* cq = NewQueue();
+	Queue* iq = LongQueue();
+	Queue* dq = NewQueue();
+
+   	Listener* ln = GetListener();
+    //	Deduper* ctrl = GetDeduper();
+	GCor* ctrl = GetGCor();
+	ImageService* is = GetImageService();
+	Distributor* dist = GetDistributor();
+
+    	ln->receiveData(connfd, lq,srv_id);
+   // 	ctrl->DedupeData(lq,cq,db,&index_lock,srv_id);
+	ctrl->GCData(lq,cq,db,&index_lock,srv_id);
+	dist->start(cq,dq,method,sdmap,&sdmap_lock,csmap,&csmap_lock,srv_id);
+	is->start(dq,iq,srv_id);
+
+    	Segment* seg = NULL;
+    	int w,n=0,r=0,lgid = -1;
+	fprintf(stderr,"starting to send response...\n");
+    	while((seg = (Segment*)Dequeue(iq)) != NULL){
+		total_chunks++;
+		if (seg->stid != lgid){
+			total_parities += CODE_SIZE;
+			lgid = seg->stid;
+		}
+		if (seg->unique == 1) {
+			if (seg->id > max_chunk_id) max_chunk_id = seg->id;
+
+			memcpy(buf+n,seg,SEG_SIZE);
+   			n+=SEG_SIZE;
+			if(n == BUF_SIZE){
+				while(n>0){
+					w = write(connfd,buf+BUF_SIZE-n,n);
+				//	printf("sending ... %d", w);
+					n -= w;		
+				}
+				r = 0;
+			}
+		}
+		free(seg);
+    	}
+	while(n>0){
+		w = write(connfd,buf+r,n);
+	//	printf("sending ... %d", w);
+		r += w;
+		n -= w;
+	}
+	ln->stop(srv_id);
+    	ctrl->stop(srv_id);
+	dist->stop(srv_id);
+	is->stop(srv_id);
+	close(connfd);
+	free(lq);
+   	free(cq);
+	free(iq);
+	free(dq);
+	fprintf(stderr,"\nOverall Dedupe Ratio: %.4f\n Data Dedupe Ratio: %.4f\n (%ld,%ld,%ld)\n\n",(float)(total_chunks+total_parities-max_chunk_id)/(total_chunks+total_parities), (float)(total_chunks+total_parities-max_chunk_id)/total_chunks,total_chunks, total_parities,max_chunk_id);
+
+	sync();
+	return NULL;
+}
+
+
+void* process2(void* ptr){
+	THREAD_ARGU ta = *(THREAD_ARGU *)ptr;
+	int connfd = ta.connfd;
+	int srv_id = ta.srv_id;
+	free(ptr);
+	printf("\nConnection fd: %d\n",connfd);
+	printf("Doing garbage collection and re-encode...\n");
+	char buf[BUF_SIZE];
+	int stat[ARRAY_SIZE];
+	memset(stat,0,sizeof(int)*ARRAY_SIZE);
+	
+	Queue* lq = NewQueue();
+    	Queue* cq = NewQueue();
+	Queue* iq = LongQueue();
+	Queue* dq = NewQueue();
+
+   	Listener* ln = GetListener();
+    //	Deduper* ctrl = GetDeduper();
+	GCorbs* ctrl = GetGCorbs();
+	ImageService* is = GetImageService();
+	Distributor* dist = GetDistributor();
+
+    	ln->receiveData(connfd, lq,srv_id);
+   // 	ctrl->DedupeData(lq,cq,db,&index_lock,srv_id);
+	ctrl->GCbsData(lq,cq,db,&index_lock,srv_id);
+	dist->start(cq,dq,method,sdmap,&sdmap_lock,csmap,&csmap_lock,srv_id);
+	is->start(dq,iq,srv_id);
+
+    	Segment* seg = NULL;
+    	int w,n=0,r=0,lgid = -1;
+	fprintf(stderr,"starting to send response...\n");
+    	while((seg = (Segment*)Dequeue(iq)) != NULL){
+		total_chunks++;
+		if (seg->stid != lgid){
+			total_parities += CODE_SIZE;
+			lgid = seg->stid;
+		}
+		if (seg->unique == 1) {
+			if (seg->id > max_chunk_id) max_chunk_id = seg->id;
+
+			memcpy(buf+n,seg,SEG_SIZE);
+   			n+=SEG_SIZE;
+			if(n == BUF_SIZE){
+				while(n>0){
+					w = write(connfd,buf+BUF_SIZE-n,n);
+				//	printf("sending ... %d", w);
+					n -= w;		
+				}
+				r = 0;
+			}
+		}
+		free(seg);
+    	}
+	while(n>0){
+		w = write(connfd,buf+r,n);
+	//	printf("sending ... %d", w);
+		r += w;
+		n -= w;
+	}
+	ln->stop(srv_id);
+    	ctrl->stop(srv_id);
+	dist->stop(srv_id);
+	is->stop(srv_id);
+	close(connfd);
+	free(lq);
+   	free(cq);
+	free(iq);
+	free(dq);
+	fprintf(stderr,"\nOverall Dedupe Ratio: %.4f\n Data Dedupe Ratio: %.4f\n (%ld,%ld,%ld)\n\n",(float)(total_chunks+total_parities-max_chunk_id)/(total_chunks+total_parities), (float)(total_chunks+total_parities-max_chunk_id)/total_chunks,total_chunks, total_parities,max_chunk_id);
+
+	sync();
+	return NULL;
+}
+
 void intHandler(){
 	kcdbsync(db,1,NULL,NULL);
 	kcdbclose(db);
@@ -151,6 +302,8 @@ int main(int argc, char** argv){
 	else if (strcmp(argv[2],"CEDP") == 0) method = C;
 	else if (strcmp(argv[2],"FEDP") == 0) method = FE;
 	else if (strcmp(argv[2],"RAD") == 0) method = R;
+	else if (strcmp(argv[2],"GCR") == 0) method = B;
+	else if (strcmp(argv[2],"GCB") == 0) method = B;
 	else {
 		fprintf(stderr,"Invalid distribution method\n");
 		exit(1);
@@ -202,7 +355,12 @@ int main(int argc, char** argv){
 		ta = (THREAD_ARGU*)malloc(sizeof(THREAD_ARGU));
 		ta->connfd = connfd;
 		ta->srv_id = srv_cnt;
-		pthread_create(&tid,NULL,process,ta);
+		if(strcmp(argv[2],"GCR") == 0)
+			pthread_create(&tid,NULL,process1,ta);
+		else if(strcmp(argv[2],"GCB") == 0)
+                    pthread_create(&tid,NULL,process2,ta);
+		else	
+			pthread_create(&tid,NULL,process,ta);
 	}
 
     	return 0;

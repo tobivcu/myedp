@@ -131,7 +131,7 @@ void* encoder(void* ptr)
 //	Enqueue(pa.q, test);
 	while ((seg = Dequeue(pa.q)) != NULL) {
 //		fprintf(stderr,"%d-th chunk: %d, last_gid: %d\n",st_cnt,seg->stid,lgid);
-		printf("Inside encoder, %d-th chunk: %d, last_gid: %d\n",st_cnt,seg->stid,lgid);
+	//	printf("Inside encoder, %d-th chunk: %d, last_gid: %d\n",st_cnt,seg->stid,lgid);
 	//	printf("Now inside while loop in encoder...\n");
 		if (seg->stid != lgid) {
 			//First Stripe Starts
@@ -184,9 +184,11 @@ void* encoder(void* ptr)
 			stripe[st_cnt] = (Segment*)malloc(sizeof(Segment));
 			memcpy(stripe[st_cnt],seg,sizeof(Segment));
 #ifndef FSL
-			printf("before assign seg->data...\n");
-			memcpy(data[st_cnt],seg->data,seg->len);
-			printf("after assign seg->data...\n");
+	//		printf("before assign seg->data...%d\t%d\n", strlen(seg->data), seg->len);
+	//		assert(seg->data!=NULL);
+		//	assert(strlen(seg->data)==seg->len);
+			memcpy(data[st_cnt],pa.data[seg->fid]+seg->offset,seg->len);
+	//		printf("after assign seg->data...\n");
 #else
 			memcpy(data[st_cnt],dummy,seg->len);
 #endif
@@ -201,7 +203,11 @@ void* encoder(void* ptr)
             stripe[st_cnt] = (Segment*)malloc(sizeof(Segment));
 			memcpy(stripe[st_cnt],seg,sizeof(Segment));
 #ifndef FSL
-			memcpy(data[st_cnt],seg->data,seg->len);
+	//		printf("before assign seg->data...%d\t%d\n", strlen(seg->data), seg->len);
+	//		assert(seg->data!=NULL);
+		//	assert(strlen(seg->data)==seg->len);
+		//	printf("seg->unique of seg %d is %d\n", seg->id, seg->unique);
+			memcpy(data[st_cnt],pa.data[seg->fid]+seg->offset,seg->len);
 #else
 			memcpy(data[st_cnt],dummy,seg->len);
 #endif
@@ -884,7 +890,7 @@ void* request(void* ptr)
 	while((next = Dequeue(cq)) != NULL){
 		cnt++;
 		seg->fsize = fsize;
-
+	//	seg->data = next->data;
 		seg->next_offset = next->offset;
 		seg->next_len = next->len;
 		seg->next_fid = next->fid;
@@ -965,6 +971,7 @@ void* response(void* ptr)
 			for(w=0;w<BUF_SIZE;w+=SEG_SIZE){
 				seg = (Segment*) malloc(sizeof(Segment));
 				memcpy(seg,buf+w,SEG_SIZE);
+				printf("For current seg, seg->id is %d, seg->unique is %d, seg->en.ref is %d\n", seg->id, seg->unique, seg->en[0].ref);
 				if (seg->pdisk[0] >= ARRAY_SIZE)
 					fprintf(stderr,"ERROR: to disk %d\n",seg->pdisk[0]);
 				stat[seg->disk]++;
@@ -1169,6 +1176,7 @@ int main(int argc, char** argv)
 		memset(&req,0,sizeof(pArgs));
 		memset(&res,0,sizeof(pArgs));
 		req.id = fsize;
+		req.data = (void**)rdata;
 		req.q = cq;
 		req.fd = &connfd;
 		res.fd = &connfd;

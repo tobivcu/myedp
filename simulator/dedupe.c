@@ -79,6 +79,7 @@ static void * process(void * ptr) {
 #endif
 //		printf("process chunk %ld\n",cnt);
 		deduper._sen[seg->id].ref++;
+		seg->en[0].ref = deduper._sen[seg->id].ref;
 //		printf("current chunk's ref is %d\n", deduper._sen[seg->id].ref);
 		Enqueue(deduper._oq[did],seg);
     	}
