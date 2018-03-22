@@ -42,7 +42,12 @@ static void * process(void * ptr) {
 	free(ptr);
     	Segment * seg = NULL;
    	uint64_t size;
-    	uint64_t cnt = 0;
+	int i = 0;
+    	uint64_t cnt1 = 0;
+	uint64_t cnt2 = 0;
+	uint64_t rem1 = 0;
+	uint64_t rem2 = 0;
+	uint64_t sum = 0;
 	struct timeval a,b,c;
 
 #ifdef DEBUG
@@ -52,9 +57,9 @@ static void * process(void * ptr) {
 	gettimeofday(&a,NULL);
     	while ((seg = (Segment *) Dequeue(gcor._iq[did])) != NULL) {
 //originally, if database NULL means it's new chunk, in GC which will not happen, so commet out.
-//		pthread_mutex_lock(gcor._lock);
-//       	void * idptr = kcdbget(gcor._db, (char *)seg->fp, FP_SIZE, &size); 
-//		pthread_mutex_unlock(gcor._lock);
+		pthread_mutex_lock(gcor._lock);
+	       	void * idptr = kcdbget(gcor._db, (char *)seg->fp, FP_SIZE, &size); 
+		pthread_mutex_unlock(gcor._lock);
 //#ifdef DEDUP
 //        	if (idptr == NULL) {
 //#endif
@@ -71,21 +76,26 @@ static void * process(void * ptr) {
 //#ifdef DEDUP
 //        	} else { 
 //		printf("chunk is duplicate...and current chunk's ref is %d\n", deduper._sen[seg->id].ref);
-//			seg->id = *(uint64_t *)idptr;
-//           		seg->unique = 0;
-//			kcfree(idptr);
-//			idptr = NULL;
+			seg->id = *(uint64_t *)idptr;
+           		seg->unique = 0;
+			kcfree(idptr);
+			idptr = NULL;
+			if(gcor._sen[seg->id].ref == 1)
+				cnt1++;
+			else
+				cnt2++;
 			//fprintf(stderr,"Duplicate chunk %ld\n",seg->id);
 //		}
 //#endif
 //		printf("process chunk %ld\n",cnt);
-		if(gcor._sen[seg->id].ref == 1)
-			continue;
-		else
-		{
-        	        printf("current chunk's ref is %d\n", gcor._sen[seg->id].ref);
-                	 Enqueue(gcor._oq[did],seg);}
-    	}
+	    	}
+	rem1 = cnt1%12;
+	rem2 = cnt2%12;
+	sum = (12 - rem1) + (12 - rem2);
+	
+	for(i=0; i<sum; i++){
+		Enqueue(gcor._oq[did], seg);
+	}
 
     	Enqueue(gcor._oq[did], NULL );
 	gettimeofday(&b,NULL);
