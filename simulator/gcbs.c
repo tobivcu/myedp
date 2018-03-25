@@ -43,6 +43,7 @@ static void * process(void * ptr) {
     	Segment * seg = NULL;
    	uint64_t size;
     	uint64_t cnt = 0;
+	uint64_t rem = 0;
 	struct timeval a,b,c;
 
 #ifdef DEBUG
@@ -80,14 +81,20 @@ static void * process(void * ptr) {
 //#endif
 //		printf("process chunk %ld\n",cnt);
 		
+		rem = (seg->id)%12;
+	
 		if(gcorbs._sen[seg->id].ref == 1)
 			continue;
 		else
-		{
-//        	        printf("current chunk's ref is %d\n", gcorbs._sen[seg->id].ref);
-                	 Enqueue(gcorbs._oq[did],seg);}
-    	
-}
+		{			
+			if((gcorbs._sen[(seg->id)-rem+1].ref > 1)&&(gcorbs._sen[(seg->id)-rem+2].ref > 1)&&(gcorbs._sen[(seg->id)-rem+3].ref > 1)&&(gcorbs._sen[(seg->id)-rem+4].ref > 1)&&(gcorbs._sen[(seg->id)-rem+5].ref > 1)&&(gcorbs._sen[(seg->id)-rem+6].ref > 1)&&(gcorbs._sen[(seg->id)-rem+7].ref > 1)&&(gcorbs._sen[(seg->id)-rem+8].ref > 1)&&(gcorbs._sen[(seg->id)-rem+9].ref > 1)&&(gcorbs._sen[(seg->id)-rem+10].ref > 1)&&(gcorbs._sen[(seg->id)-rem+11].ref > 1)&&(gcorbs._sen[(seg->id)-rem+12].ref > 1))
+				continue;
+			else{
+			//    printf("current chunk's ref is %d\n", gcorbs._sen[seg->id].ref);
+   				 Enqueue(gcorbs._oq[did],seg);
+			}
+		}
+		}
     	Enqueue(gcorbs._oq[did], NULL );
 	gettimeofday(&b,NULL);
 	timersub(&b,&a,&c);

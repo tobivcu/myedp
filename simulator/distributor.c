@@ -632,7 +632,7 @@ static void* process(void* ptr){
 	//Assume that files are processed in order and separately
 	while((seg=(Segment*) Dequeue(dist._iq[did])) != NULL) {
 		//printf("Distributor: chunk %ld of file %d, unique?%d\n",seg->id,seg->fid,seg->unique);
-		printf("Right after the while loop, the reference counter of the chunk %ld is %d\n", seg->id, dist._sen[seg->id].ref);
+	//	printf("Right after the while loop, the reference counter of the chunk %ld is %d\n", seg->id, dist._sen[seg->id].ref);
 	//	seg->en[0].ref = dist._sen[seg->id].ref;
 		//fprintf(stderr,"Distributor: chunk %ld of file %d, unique?%d",seg->id,seg->fid,seg->unique);
 		//Update fSize if segment with different fid is encountered
