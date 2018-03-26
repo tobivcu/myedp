@@ -47,6 +47,7 @@ static void * process(void * ptr) {
 	int i = 0;
     	uint64_t cnt1 = 0;
 	uint64_t cnt2 = 0;
+	uint64_t rem = 0;
 	uint64_t rem1 = 0;
 	uint64_t rem2 = 0;
 	uint64_t sum1 = 0;
@@ -80,41 +81,51 @@ static void * process(void * ptr) {
 //        	} else { 
 //		printf("chunk is duplicate...and current chunk's ref is %d\n", deduper._sen[seg->id].ref);
 			seg->id = *(uint64_t *)idptr;
-           		seg->unique = 0;
+           		seg->unique = 1;
 			kcfree(idptr);
 			idptr = NULL;
-			if(gcor._sen[seg->id].ref == 1){
-				cnt1++;
-				segtmp1 = seg;}
+			
+			rem = (seg->id)%12;
+
+			if(gcor._sen[seg->id].ref == 1)
+				continue;
+				
 			else{
-				cnt2++;
-				segtmp2 = seg;}
+			if((gcor._sen[(seg->id)-rem+1].ref > 1)&&(gcor._sen[(seg->id)-rem+2].ref > 1)&&(gcor._sen[(seg->id)-rem+3].ref > 1)&&(gcor._sen[(seg->id)-rem+4].ref > 1)&&(gcor._sen[(seg->id)-rem+5].ref > 1)&&(gcor._sen[(seg->id)-rem+6].ref > 1)&&(gcor._sen[(seg->id)-rem+7].ref > 1)&&(gcor._sen[(seg->id)-rem+8].ref > 1)&&(gcor._sen[(seg->id)-rem+9].ref > 1)&&(gcor._sen[(seg->id)-rem+10].ref > 1)&&(gcor._sen[(seg->id)-rem+11].ref > 1)&&(gcor._sen[(seg->id)-rem+12].ref > 1))
+                                  continue;
+                          else{
+                          //    printf("current chunk's ref is %d\n", gcor._sen[seg->id].ref);
+                                   Enqueue(gcor._oq[did],seg);
+                          }	
+				
+			}
 			//fprintf(stderr,"Duplicate chunk %ld\n",seg->id);
 //		}
 //#endif
 //		printf("process chunk %ld\n",cnt);
 	    	}
-	rem1 = cnt1%12;
+//the older version which would incur segmentation fault in server side.
+/*	rem1 = cnt1%12;
 	rem2 = cnt2%12;
 	sum1 = 12 - rem1;
 	sum2 = 12 - rem2;
 	if((sum1+sum2) > 16){	
 	for(i=0; i<sum1; i++){
-		segtmp1->id--;
+		(segtmp1->id)--;
 		Enqueue(gcor._oq[did], segtmp1);
 	}
 
 	for(i=0; i<sum2; i++){
-		segtmp2->id--;
+		(segtmp2->id)--;
 		Enqueue(gcor._oq[did], segtmp2);
 	}}
 	else{
 		for(i=0; i<16; i++){
-		segtmp2->id--;
+		(segtmp2->id--);
 		Enqueue(gcor._oq[did], segtmp2);
 	}
 	}
-
+*/
     	Enqueue(gcor._oq[did], NULL );
 	gettimeofday(&b,NULL);
 	timersub(&b,&a,&c);
